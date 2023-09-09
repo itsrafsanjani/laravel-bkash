@@ -1,12 +1,12 @@
 <?php
 
-namespace VendorName\Skeleton\Commands;
+namespace ItsRafsanJani\Bkash\Commands;
 
 use Illuminate\Console\Command;
 
-class SkeletonCommand extends Command
+class BkashCommand extends Command
 {
-    public $signature = 'skeleton';
+    public $signature = 'laravel-bkash';
 
     public $description = 'My command';
 
