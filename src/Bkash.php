@@ -8,9 +8,6 @@ use Psr\Container\NotFoundExceptionInterface;
 
 class Bkash
 {
-    /**
-     * @var string $baseUrl
-     */
     public string $baseUrl;
 
     public function __construct()
@@ -39,9 +36,9 @@ class Bkash
         return request()->ip();
     }
 
-
     /**
      * @return array|mixed
+     *
      * @throws \Exception
      */
     public function getToken()
@@ -63,7 +60,6 @@ class Bkash
             'app_secret' => $appSecret,
             'refresh_token' => $refreshToken,
         ])->json();
-
 
         $this->throwIfError($response);
 
@@ -88,8 +84,8 @@ class Bkash
     }
 
     /**
-     * @param array $data
      * @return array|mixed
+     *
      * @throws ContainerExceptionInterface
      * @throws NotFoundExceptionInterface
      * @throws \Exception
@@ -108,8 +104,6 @@ class Bkash
     }
 
     /**
-     * @param array $response
-     * @return void
      * @throws \Exception
      */
     public function throwIfError(array $response): void
