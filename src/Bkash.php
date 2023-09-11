@@ -62,7 +62,7 @@ class Bkash
 
     public function throwIfError(array $response): void
     {
-        if ($response['statusCode'] != 0000) {
+        if ($response['statusCode'] != 0000 && $response['statusCode'] != 2062) {
             Log::error(json_encode($response));
             throw new \Exception($response['statusMessage']);
         }
@@ -77,6 +77,44 @@ class Bkash
 
         $response = Http::withHeaders($this->headers)
             ->post($this->baseUrl . '/checkout/create', $data)
+            ->json();
+
+        $this->throwIfError($response);
+
+        return $response;
+    }
+
+    public function executePayment($paymentID)
+    {
+        $response = Http::withHeaders($this->headers)
+            ->post($this->baseUrl . '/checkout/execute', [
+                'paymentID' => $paymentID,
+            ])
+            ->json();
+
+        $this->throwIfError($response);
+
+        return $response;
+    }
+
+    public function queryPayment($paymentID)
+    {
+        $response = Http::withHeaders($this->headers)
+            ->post($this->baseUrl . '/checkout/payment/status', [
+                'paymentID' => $paymentID,
+            ])
+            ->json();
+
+        $this->throwIfError($response);
+
+        return $response;
+    }
+    public function searchTransaction($trdID)
+    {
+        $response = Http::withHeaders($this->headers)
+            ->post($this->baseUrl . '/checkout/general/searchTransaction', [
+                'trxID' => $trdID,
+            ])
             ->json();
 
         $this->throwIfError($response);
