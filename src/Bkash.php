@@ -38,7 +38,7 @@ class Bkash
             'Content-Type' => 'application/json',
             'password' => config('bkash.password'),
             'username' => config('bkash.username'),
-        ])->post($this->baseUrl . '/checkout/token/grant', [
+        ])->post($this->baseUrl.'/checkout/token/grant', [
             'app_key' => config('bkash.app_key'),
             'app_secret' => config('bkash.app_secret'),
             'refresh_token' => null,
@@ -76,7 +76,7 @@ class Bkash
         $data['callbackURL'] = config('bkash.callbackURL');
 
         $response = Http::withHeaders($this->headers)
-            ->post($this->baseUrl . '/checkout/create', $data)
+            ->post($this->baseUrl.'/checkout/create', $data)
             ->json();
 
         $this->throwIfError($response);
@@ -87,7 +87,7 @@ class Bkash
     public function executePayment($paymentID)
     {
         $response = Http::withHeaders($this->headers)
-            ->post($this->baseUrl . '/checkout/execute', [
+            ->post($this->baseUrl.'/checkout/execute', [
                 'paymentID' => $paymentID,
             ])
             ->json();
@@ -100,7 +100,7 @@ class Bkash
     public function queryPayment($paymentID)
     {
         $response = Http::withHeaders($this->headers)
-            ->post($this->baseUrl . '/checkout/payment/status', [
+            ->post($this->baseUrl.'/checkout/payment/status', [
                 'paymentID' => $paymentID,
             ])
             ->json();
@@ -109,10 +109,11 @@ class Bkash
 
         return $response;
     }
+
     public function searchTransaction($trdID)
     {
         $response = Http::withHeaders($this->headers)
-            ->post($this->baseUrl . '/checkout/general/searchTransaction', [
+            ->post($this->baseUrl.'/checkout/general/searchTransaction', [
                 'trxID' => $trdID,
             ])
             ->json();
