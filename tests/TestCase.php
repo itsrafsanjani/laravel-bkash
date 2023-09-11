@@ -3,8 +3,8 @@
 namespace ItsRafsanJani\Bkash\Tests;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Orchestra\Testbench\TestCase as Orchestra;
 use ItsRafsanJani\Bkash\BkashServiceProvider;
+use Orchestra\Testbench\TestCase as Orchestra;
 
 class TestCase extends Orchestra
 {
