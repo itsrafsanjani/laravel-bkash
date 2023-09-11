@@ -2,27 +2,24 @@
 
 namespace ItsRafsanJani\Bkash;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
-use Psr\Container\ContainerExceptionInterface;
-use Psr\Container\NotFoundExceptionInterface;
+use Illuminate\Support\Facades\Log;
 
 class Bkash
 {
-    /**
-     * @var string $baseUrl
-     */
     public string $baseUrl;
+
+    public array $headers;
 
     public function __construct()
     {
-        $this->baseUrl();
+        $this->setBaseUrl();
+        $this->getOrSetTokenInCache();
+        $this->setHeaders();
     }
 
-    /**
-     * bkash Base Url
-     * if sandbox is true it will be sandbox url otherwise it is host url
-     */
-    public function baseUrl()
+    public function setBaseUrl()
     {
         if (config('bkash.sandbox')) {
             $this->baseUrl = 'https://tokenized.sandbox.bka.sh/v1.2.0-beta/tokenized';
@@ -31,91 +28,59 @@ class Bkash
         }
     }
 
-    /**
-     * @return string|null
-     */
-    public function getIp()
+    public function getOrSetTokenInCache()
     {
-        return request()->ip();
-    }
-
-
-    /**
-     * @return array|mixed
-     * @throws \Exception
-     */
-    public function getToken()
-    {
-        session()->forget('bkash_token');
-        session()->forget('bkash_token_type');
-        session()->forget('bkash_refresh_token');
-
-        $appKey = config('bkash.app_key');
-        $appSecret = config('bkash.app_secret');
-        $refreshToken = null; // Set your refresh token here
+        if (Cache::has('bkash_token')) {
+            return true;
+        }
 
         $response = Http::withHeaders([
             'Content-Type' => 'application/json',
             'password' => config('bkash.password'),
             'username' => config('bkash.username'),
-        ])->post("$this->baseUrl/checkout/token/grant", [
-            'app_key' => $appKey,
-            'app_secret' => $appSecret,
-            'refresh_token' => $refreshToken,
+        ])->post($this->baseUrl . '/checkout/token/grant', [
+            'app_key' => config('bkash.app_key'),
+            'app_secret' => config('bkash.app_secret'),
+            'refresh_token' => null,
         ])->json();
-
 
         $this->throwIfError($response);
 
-        session()->put('bkash_token', $response['id_token']);
-        session()->put('bkash_token_type', $response['token_type']);
-        session()->put('bkash_refresh_token', $response['refresh_token']);
+        Cache::put('bkash_token', $response['id_token'], now()->addMinutes(59));
 
         return true;
     }
 
-    /**
-     * @throws ContainerExceptionInterface
-     * @throws NotFoundExceptionInterface
-     */
-    protected function headers()
+    protected function setHeaders()
     {
-        return [
+        $this->headers = [
             'Content-Type' => 'application/json',
-            'Authorization' => session()->get('bkash_token'),
+            'Authorization' => Cache::get('bkash_token'),
             'X-APP-KEY' => config('bkash.app_key'),
         ];
     }
 
-    /**
-     * @param array $data
-     * @return array|mixed
-     * @throws ContainerExceptionInterface
-     * @throws NotFoundExceptionInterface
-     * @throws \Exception
+    public function throwIfError(array $response): void
+    {
+        if ($response['statusCode'] != 0000) {
+            Log::error(json_encode($response));
+            throw new \Exception($response['statusMessage']);
+        }
+    }
+
+    /*
+     * Start payment related methods.
      */
     public function createPayment(array $data)
     {
-        $this->getToken();
+        $data['callbackURL'] = config('bkash.callbackURL');
 
-        $response = Http::withHeaders($this->headers())
-            ->post("$this->baseUrl/checkout/create", $data)
+        $response = Http::withHeaders($this->headers)
+            ->post($this->baseUrl . '/checkout/create', $data)
             ->json();
 
         $this->throwIfError($response);
 
         return $response;
-    }
-
-    /**
-     * @param array $response
-     * @return void
-     * @throws \Exception
-     */
-    public function throwIfError(array $response): void
-    {
-        if ($response['statusCode'] !== 0000) {
-            throw new \Exception($response['statusMessage']);
-        }
     }
 }
