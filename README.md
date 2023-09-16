@@ -139,7 +139,7 @@ return response()->json($searchTransactionResponse);
 ## Testing
 
 ```bash
-php artisan test
+./vendor/bin/pest
 ```
 
 ## Changelog
