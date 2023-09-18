@@ -60,8 +60,12 @@ class Bkash
         ];
     }
 
-    public function throwIfError(array $response): void
+    public function throwIfError(array|null $response): void
     {
+        if (is_null($response)) {
+            throw new \Exception('Empty response from Bkash or you are in a test environment.');
+        }
+
         if ($response['statusCode'] != 0000 && $response['statusCode'] != 2062) {
             Log::error(json_encode($response));
             throw new \Exception($response['statusMessage']);
