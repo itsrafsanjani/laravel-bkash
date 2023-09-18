@@ -5,6 +5,7 @@ namespace ItsRafsanJani\Bkash;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use ItsRafsanJani\Bkash\Data\CreatePaymentData;
 
 class Bkash
 {
@@ -75,10 +76,8 @@ class Bkash
     /*
      * Start payment related methods.
      */
-    public function createPayment(array $data)
+    public function createPayment(CreatePaymentData $data)
     {
-        $data['callbackURL'] = config('bkash.callbackURL');
-
         $response = Http::withHeaders($this->headers)
             ->post($this->baseUrl.'/checkout/create', $data)
             ->json();
