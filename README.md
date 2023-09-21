@@ -24,32 +24,107 @@ This is the contents of the published config file:
 
 ```php
 return [
-    'sandbox' => env('BKASH_SANDBOX', true),
-    
+    'sandbox' => env('BKASH_SANDBOX', true), // true for testing, false for production
+
     'app_key' => env('BKASH_APP_KEY', ''),
     'app_secret' => env('BKASH_APP_SECRET', ''),
     'username' => env('BKASH_USERNAME', ''),
     'password' => env('BKASH_PASSWORD', ''),
-    
+
+    // bkash will send data to this url
     'callbackURL' => env('BKASH_CALLBACK_URL', 'http://127.0.0.1:8000/bkash/callback'),
     'timezone' => 'Asia/Dhaka',
 ];
 ```
 
+## Configuration
+
+- Setup `.env`
+```dotenv
+# true for testing, false for production
+BKASH_SANDBOX=true
+BKASH_APP_KEY=
+BKASH_APP_SECRET=
+BKASH_USERNAME=
+BKASH_PASSWORD=
+# bkash will send data to this url
+BKASH_CALLBACK_URL=http://127.0.0.1:8000/bkash/callback
+```
+
+- Create route for bkash in `routes/web.php`
+```php
+Route::get('/bkash/callback', [PaymentController::class, 'callback']);
+```
+
+- Add exception in `app\Http\Middleware\VerifyCsrfToken.php`
+```php
+protected $except = [
+    'bkash/*',
+];
+```
+
 ## Usage
+
+### Pay and Callback (Example Code for Controller)
+```php
+use Illuminate\Http\Request;
+use ItsRafsanJani\Bkash\Data\CreatePaymentData;
+use ItsRafsanJani\Bkash\Facades\Bkash;
+
+class PaymentController extends Controller
+{
+    public function pay()
+    {
+        // ..
+        // save payment related data in your database or anything
+        // ..
+
+        $invoiceId = uniqid(); // could be any string
+
+        $response = Bkash::createPayment(
+            new CreatePaymentData(
+                amount: 20.50,
+                payerReference: $invoiceId,
+            )
+        );
+
+        // dd($response);
+
+        return redirect()->away($response->bkashURL);
+    }
+
+    public function callback(Request $request)
+    {
+        // first you need to execute
+        $executeResponse = Bkash::executePayment($request->paymentID);
+
+        // then query
+        $queryResponse =  Bkash::queryPayment($request->paymentID);
+        
+        // ..
+        // update payment status
+        // ..
+    }
+}
+```
+
+## Available Methods and Response
 
 ### Create Payment
 ```php
-$invoiceId = uniqid();
-$request['intent'] = 'sale';
-$request['mode'] = '0011'; // 0011 for checkout
-$request['payerReference'] = $invoiceId;
-$request['currency'] = 'BDT';
-$request['amount'] = 10;
-$request['merchantInvoiceNumber'] = $invoiceId;
+$invoiceId = uniqid(); // could be any string
 
-$response = Bkash::createPayment($request->all());
+$response = Bkash::createPayment(
+    new CreatePaymentData(
+        amount: 20.50,
+        payerReference: $invoiceId,
+    )
+);
+
+return response()->json($response);
 ```
+
+### Example Response
 ```json
 {
     "statusCode": "0000",
@@ -68,12 +143,15 @@ $response = Bkash::createPayment($request->all());
     "merchantInvoiceNumber": "65059731*****"
 }
 ```
+
 ### Execute Payment
 ```php
 $response = Bkash::executePayment($request->paymentID);
 
 return response()->json($response);
 ```
+
+### Example Response
 ```json
 {
   "statusCode": "0000",
@@ -90,12 +168,15 @@ return response()->json($response);
   "merchantInvoiceNumber": "64ff4dd6*****"
 }
 ```
+
 ### Query Payment
 ```php
 $response =  Bkash::queryPayment($request->paymentID);
 
 return response()->json($response);
 ```
+
+### Example Response
 ```json
 {
   "paymentID": "TR0011f0CE1zl16944532*****",
@@ -120,6 +201,8 @@ $searchTransactionResponse = Bkash::searchTransaction($response['trxID']);
 
 return response()->json($searchTransactionResponse);
 ```
+
+### Example Response
 ```json
 {
   "trxID": "AIB10*****",
