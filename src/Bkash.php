@@ -61,7 +61,7 @@ class Bkash
         ];
     }
 
-    public function throwIfError(array|null $response): void
+    public function throwIfError(?array $response): void
     {
         if (is_null($response)) {
             throw new \Exception('Empty response from Bkash or you are in a test environment.');
