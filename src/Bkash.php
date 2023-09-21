@@ -73,9 +73,6 @@ class Bkash
         }
     }
 
-    /*
-     * Start payment related methods.
-     */
     public function createPayment(CreatePaymentData $data)
     {
         $response = Http::withHeaders($this->headers)
